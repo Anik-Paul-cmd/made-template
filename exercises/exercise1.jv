@@ -1,33 +1,28 @@
-pipeline AirportDataPipeline {
-    block AirportDataExtractor oftype CSVExtractor {
-        url: "https://opendata.rhein-kreis-neuss.de/api/explore/v2.1/catalog/datasets/rhein-kreis-neuss-flughafen-weltweit/exports/csv?lang=en&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B";
-        delimiter: ';';
-    }
 
-    block AirportDataTableInterpreter oftype TableInterpreter {
-        header: true;
-        columns: [
-            "Airport ID" oftype integer,
-            "Name" oftype text,
-            "City" oftype text,
-            "Country" oftype text,
-            "IATA" oftype text,
-            "ICAO" oftype text,
-            "Latitude" oftype decimal,
-            "Longitude" oftype decimal,
-            "Altitude" oftype integer,
-            "Timezone" oftype text,
-            "DST" oftype text,
-            "Tz database time zone" oftype text,
-            "Type" oftype text,
-            "Source" oftype text
-        ];
-    }
+import jayvee as jv
+import sqlite3
 
-    block AirportDataLoader oftype SQLiteLoader {
-        table: "airports";
-        file: "airports.sqlite";
-    }
 
-    AirportDataExtractor -> AirportDataTableInterpreter -> AirportDataLoader;
+url = "https://opendata.rhein-kreis-neuss.de/api/explore/v2.1/catalog/datasets/rhein-kreis-neuss-flughafen-weltweit/exports/csv?lang=en&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B"
+
+database_name = "airports.sqlite"
+table_name = "airports"
+
+column_types = {
+    "iata_code": "TEXT",
+    "name": "TEXT",
+    "city": "TEXT",
+    "country": "TEXT",
+    "latitude": "FLOAT",
+    "longitude": "FLOAT",
+    "timezone": "TEXT"
 }
+
+
+pipeline = (
+    jv.load(url)  // Load data from the provided URL
+    .to_sqlite(database_name, table_name, column_types=column_types) 
+    .extractor("airports.sqlite")  // Define the output file
+)
+
+pipeline.execute()
