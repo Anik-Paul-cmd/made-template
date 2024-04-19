@@ -1,30 +1,41 @@
-# Import necessary libraries
+// Import necessary libraries
 import jayvee as jv
-import sqlite3
 
-# Define the URL of the data source
-url = "https://opendata.rhein-kreis-neuss.de/api/explore/v2.1/catalog/datasets/rhein-kreis-neuss-flughafen-weltweit/exports/csv?lang=en&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B"
+// Define the pipeline
+pipeline AirportDataPipeline {
+    // Define the extractor block
+    block AirportDataExtractor oftype CSVExtractor {
+        url = "https://opendata.rhein-kreis-neuss.de/api/explore/v2.1/catalog/datasets/rhein-kreis-neuss-flughafen-weltweit/exports/csv?lang=en&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B";
+        delimiter = ';';
+    }
 
-# Define the SQLite database name and table name
-database_name = "airports.sqlite"
-table_name = "airports"
+    // Define the interpreter block
+    block AirportDataTableInterpreter oftype TableInterpreter {
+        header = true;
+        columns = [
+            "Airport ID" oftype integer,
+            "Name" oftype text,
+            "City" oftype text,
+            "Country" oftype text,
+            "IATA" oftype text,
+            "ICAO" oftype text,
+            "Latitude" oftype decimal,
+            "Longitude" oftype decimal,
+            "Altitude" oftype integer,
+            "Timezone" oftype text,
+            "DST" oftype text,
+            "Tz database time zone" oftype text,
+            "Type" oftype text,
+            "Source" oftype text
+        ];
+    }
 
-# Define column types based on the provided data schema
-column_types = {
-    "iata_code": "TEXT",
-    "name": "TEXT",
-    "city": "TEXT",
-    "country": "TEXT",
-    "latitude": "FLOAT",
-    "longitude": "FLOAT",
-    "timezone": "TEXT"
+    // Define the loader block
+    block AirportDataLoader oftype SQLiteLoader {
+        table = "airports";
+        file = "airports.sqlite";
+    }
+
+    // Define the pipeline flow
+    AirportDataExtractor -> AirportDataTableInterpreter -> AirportDataLoader;
 }
-
-# Define the data pipeline
-pipeline = (
-    jv.load(url)  # Load data from the provided URL
-    .to_sqlite(database_name, table_name, column_types=column_types)  # Write data to SQLite database
-)
-
-# Execute the data pipeline
-pipeline.execute()
