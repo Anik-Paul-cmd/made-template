@@ -20,7 +20,6 @@ pipeline TreesDataPipeline {
     }
     constraint IDGeoPattern oftype RegexConstraint {
         regex: /^\d{1,3}\.\d+, \d{1,3}\.\d+$/;
-        error_message: "Invalid format for geo-coordinate. The format should be {1-3 digits}.{numbers}, {1-3 digits}.{numbers}. For example, 51.1847, 6.69469.";
     }
 
     valuetype StadtteilFurth oftype text {
@@ -28,8 +27,8 @@ pipeline TreesDataPipeline {
             FurthPrefix,
         ];
     }
-    constraint FurthPrefix oftype PrefixConstraint {
-        prefix: "Furth-";
+    constraint FurthPrefix oftype RegexConstraint {
+        regex: /^Furth-.*/;
     }
 
     block ValidDataFilter oftype TableInterpreter {
